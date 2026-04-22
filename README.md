@@ -1,6 +1,6 @@
-# PhishGuard
+# PhishGuard 
 
-A browser extension that intercepts suspicious links on Discord and generates contextually specific, AI-powered warnings using Google Gemini. Built as part of a usable security research project at Louisiana State University.
+A browser extension for Chromium browsers that intercepts suspicious links on Discord and generates contextually specific, AI-powered warnings using Google Gemini. Built as part of a usable security research project at Louisiana State University.
 
 ---
 
