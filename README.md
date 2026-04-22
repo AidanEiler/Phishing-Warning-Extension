@@ -1,4 +1,4 @@
-# Phishing Warning System
+# PhishGuard
 
 A browser extension that intercepts suspicious links on Discord and generates contextually specific, AI-powered warnings using Google Gemini. Built as part of a usable security research project at Louisiana State University.
 

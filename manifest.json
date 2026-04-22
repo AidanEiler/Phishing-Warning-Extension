@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Phishing Warning System",
+  "name": "PhishGuard",
   "version": "1.0",
-  "description": "Adaptive phishing warning layer for messaging applications. Intercepts suspicious links and generates contextually specific warnings using AI.",
+  "description": "Adaptive AI-powered phishing warning layer for messaging applications.",
   "permissions": [
     "storage",
     "activeTab"
