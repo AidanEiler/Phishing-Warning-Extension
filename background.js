@@ -54,6 +54,20 @@ async function sendPrompt(apiKey, prompt) {
   }
 
   const data = await response.json();
+
+  // Check if candidates exist and have content
+  if (!data.candidates || data.candidates.length === 0) {
+    throw new Error('Analysis was blocked or returned no results. Please try again.');
+  }
+
+  if (
+    !data.candidates[0].content ||
+    !data.candidates[0].content.parts ||
+    data.candidates[0].content.parts.length === 0
+  ) {
+    throw new Error('Analysis returned an empty response. Please try again.');
+  }
+
   return data.candidates[0].content.parts[0].text;
 }
 
