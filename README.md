@@ -106,3 +106,5 @@ Each warning is visually unique, varying across the following dimensions to resi
 This extension was developed as a prototype for a usable security research study titled *Phishing Warning Design in Messaging Applications: A Comparative Evaluation of Effectiveness and Habituation Over Time*, conducted at the LSU Cybersecurity Clinic. The study investigates how warning delivery mode, language specificity, and visual presentation affect phishing detection in messaging environments.
 
 The polymorphic warning design is grounded in habituation theory and implements variations validated by Anderson et al. (2016) as most resistant to repetition suppression.
+
+While this prototype targets Discord web, the underlying warning layer architecture is platform-agnostic. The link interception, AI analysis, and polymorphic warning display components can be adapted to any messaging platform with a web interface, including WhatsApp Web, Telegram Web, and Slack.
