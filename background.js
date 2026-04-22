@@ -1,7 +1,7 @@
 // background.js
 // Service worker that handles all Gemini API calls.
-// Receives messages from content.js, calls the Gemini API,
-// and returns the warning text or an error message.
+// Receives messages from content.js, calls the Gemini API with Google Search grounding,
+// and returns the warning text or SAFE if the link is legitimate.
 
 const GEMINI_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -21,11 +21,11 @@ async function respectRateLimit() {
   lastRequestTime = Date.now();
 }
 
-// Send a prompt to the Gemini API and return the response text
+// Send a prompt to the Gemini API with Google Search grounding
 async function sendPrompt(apiKey, prompt) {
   await respectRateLimit();
 
-  const response = await fetch(`${GEMINI_URL}`, {
+  const response = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -36,6 +36,11 @@ async function sendPrompt(apiKey, prompt) {
         {
           parts: [{ text: prompt }],
         },
+      ],
+      tools: [
+        {
+          google_search: {}
+        }
       ],
       generationConfig: {
         maxOutputTokens: 8192,
@@ -53,22 +58,33 @@ async function sendPrompt(apiKey, prompt) {
 }
 
 // Generate a contextually specific warning for a suspicious message
+// Uses Google Search grounding to evaluate domain legitimacy dynamically
 async function generateWarning(apiKey, messageContext, linkUrl) {
   const prompt = `You are a phishing warning system for a messaging application.
-A user is about to click a suspicious link in the following conversation.
+A user is about to click a link. Use Google Search to research the domain and determine if this link is genuinely suspicious.
 
-CONVERSATION:
+CONVERSATION CONTEXT:
 ${messageContext}
 
-LINK:
+LINK URL:
 ${linkUrl}
 
-Generate a brief, clear warning (2-3 sentences maximum) that:
-1. Explains specifically why this message is suspicious based on its context
-2. Identifies the specific risk the user faces
-3. Is written in plain language without technical jargon
+Search for information about the domain to determine its legitimacy. Consider:
+- Is this a well known legitimate website?
+- Are there any reports of this domain being used for phishing?
+- Does the domain make sense in the context of the conversation?
+- Is the domain attempting to impersonate a well known brand through typosquatting? Look for subtle misspellings, character substitutions, or added words that make a fake domain resemble a trusted one (e.g. "discordd.com", "paypa1.com", "steamcommunlty.com").
+- Are there suspicious subdomains or URL structures designed to look legitimate at a glance?
 
-Provide only the warning text, no preamble or labels.`;
+If the link appears legitimate based on your research, respond with exactly: SAFE
+
+If the link is genuinely suspicious, respond with a brief warning (2-3 sentences) that:
+1. Explains specifically why this link appears suspicious based on its context
+2. Identifies the specific risk the user may face, including typosquatting if applicable
+3. Is written in plain language without technical jargon
+4. Uses cautious, hedged language — avoid absolute claims like "this is a phishing site" or "this will steal your information". Instead use phrases like "this link appears suspicious", "this may be an attempt to", or "exercise caution before proceeding".
+
+Provide only "SAFE" or the warning text, nothing else.`;
 
   return await sendPrompt(apiKey, prompt);
 }
@@ -76,7 +92,6 @@ Provide only the warning text, no preamble or labels.`;
 // Listen for messages from content.js
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'ANALYZE_LINK') {
-    // Retrieve API key from Chrome storage and analyze the link
     chrome.storage.sync.get('geminiApiKey', async (result) => {
       const apiKey = result.geminiApiKey;
 
@@ -89,12 +104,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       try {
-        const warningText = await generateWarning(
+        const response = await generateWarning(
           apiKey,
           message.messageContext,
           message.linkUrl
         );
-        sendResponse({ success: true, warningText });
+
+        // Check if Gemini determined the link is safe
+        if (response.trim().toUpperCase() === 'SAFE') {
+          sendResponse({ success: true, safe: true });
+        } else {
+          sendResponse({ success: true, safe: false, warningText: response });
+        }
       } catch (error) {
         sendResponse({ success: false, error: error.message });
       }

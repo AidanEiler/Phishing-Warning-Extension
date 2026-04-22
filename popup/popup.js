@@ -1,3 +1,6 @@
+// popup.js
+// Handles API key entry, validation, storage, and status display.
+
 // Load saved API key on popup open
 document.addEventListener('DOMContentLoaded', async () => {
   const result = await chrome.storage.sync.get('geminiApiKey');
@@ -36,6 +39,11 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     return;
   }
 
+  if (!apiKey.startsWith('AIza')) {
+    showMessage('Invalid API key format. Gemini API keys start with "AIza".', 'error');
+    return;
+  }
+
   await chrome.storage.sync.set({ geminiApiKey: apiKey });
 
   const statusDot = document.getElementById('statusDot');
@@ -62,7 +70,6 @@ document.getElementById('clearBtn').addEventListener('click', async () => {
 
 // Show a temporary status message
 function showMessage(text, type) {
-  // Remove existing message if present
   const existing = document.querySelector('.message');
   if (existing) existing.remove();
 

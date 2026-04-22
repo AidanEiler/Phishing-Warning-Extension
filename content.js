@@ -2,16 +2,65 @@
 // Injected into Discord web pages.
 // Intercepts link clicks, extracts message context,
 // sends to background.js for analysis, and displays warning modal.
+// Implements random polymorphic warning variations based on Anderson et al.
 
 // Track links that have already been analyzed and approved by the user
-// to avoid showing the warning multiple times for the same link
 const approvedLinks = new Set();
 
+// Prevent the click interceptor from re-firing on programmatically opened links
+let bypassNext = false;
+
+// Polymorphic warning variations based on Anderson et al.
+const VARIATIONS = [
+  {
+    name: 'symbol',
+    borderColor: '#ed4245',
+    backgroundColor: '#2b2d31',
+    headerColor: '#ed4245',
+    icon: `<svg class="pw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+      <path d="M12 6v6m0 4h.01" stroke-linecap="round"/>
+    </svg>`,
+    headerText: 'Phishing Warning',
+    animationClass: '',
+  },
+  {
+    name: 'colorChange',
+    borderColor: '#faa61a',
+    backgroundColor: '#2d2a1f',
+    headerColor: '#faa61a',
+    icon: `<svg class="pw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2L2 19h20L12 2z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
+    </svg>`,
+    headerText: 'Security Alert',
+    animationClass: '',
+  },
+  {
+    name: 'jiggle',
+    borderColor: '#ed4245',
+    backgroundColor: '#2b2d31',
+    headerColor: '#ed4245',
+    icon: `<svg class="pw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2L2 19h20L12 2z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
+    </svg>`,
+    headerText: 'Suspicious Link Detected',
+    animationClass: 'pw-jiggle',
+  },
+];
+
+// Select a random variation each time a warning is shown
+function getRandomVariation() {
+  return VARIATIONS[Math.floor(Math.random() * VARIATIONS.length)];
+}
+
 // Extract the conversation context surrounding a clicked link
-// Looks for the nearest Discord message container and gets surrounding messages
 function extractMessageContext(linkElement) {
-  // Find the message content container
-  const messageContent = linkElement.closest('[class*="messageContent"]') ||
+  const messageContent =
+    linkElement.closest('[class*="messageContent"]') ||
     linkElement.closest('[class*="message-"]') ||
     linkElement.closest('li');
 
@@ -19,8 +68,8 @@ function extractMessageContext(linkElement) {
     return linkElement.textContent || linkElement.href;
   }
 
-  // Try to get surrounding messages for broader context
-  const messageGroup = messageContent.closest('[class*="messageGroup"]') ||
+  const messageGroup =
+    messageContent.closest('[class*="messageGroup"]') ||
     messageContent.closest('[class*="groupStart"]') ||
     messageContent.parentElement;
 
@@ -28,7 +77,6 @@ function extractMessageContext(linkElement) {
     return messageContent.textContent || '';
   }
 
-  // Collect text from surrounding messages for context
   const messages = messageGroup.querySelectorAll('[class*="messageContent"]');
   const contextLines = [];
 
@@ -40,44 +88,38 @@ function extractMessageContext(linkElement) {
   return contextLines.join('\n') || messageContent.textContent || '';
 }
 
-// Create and inject the warning modal into the Discord page
-function showWarningModal(linkUrl, warningText, originalClickHandler) {
-  // Remove any existing modal
+// Create and inject the warning modal with a random polymorphic variation
+function showWarningModal(linkUrl, warningText) {
   const existing = document.getElementById('phishing-warning-modal');
   if (existing) existing.remove();
 
-  // Create overlay
+  const variation = getRandomVariation();
+
   const overlay = document.createElement('div');
   overlay.id = 'phishing-warning-modal';
   overlay.className = 'pw-overlay';
 
-  // Create modal container
   const modal = document.createElement('div');
-  modal.className = 'pw-modal';
+  modal.className = `pw-modal ${variation.animationClass}`;
+  modal.style.borderColor = variation.borderColor;
+  modal.style.backgroundColor = variation.backgroundColor;
 
-  // Header
   const header = document.createElement('div');
   header.className = 'pw-header';
+  header.style.color = variation.headerColor;
   header.innerHTML = `
-    <svg class="pw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 2L2 19h20L12 2z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/>
-      <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
-    </svg>
-    <span>Phishing Warning</span>
+    ${variation.icon}
+    <span>${variation.headerText}</span>
   `;
 
-  // Warning text
   const body = document.createElement('div');
   body.className = 'pw-body';
   body.textContent = warningText;
 
-  // Link display
   const linkDisplay = document.createElement('div');
   linkDisplay.className = 'pw-link';
   linkDisplay.textContent = linkUrl;
 
-  // Buttons
   const buttons = document.createElement('div');
   buttons.className = 'pw-buttons';
 
@@ -88,27 +130,17 @@ function showWarningModal(linkUrl, warningText, originalClickHandler) {
     overlay.remove();
   });
 
-  const reportBtn = document.createElement('button');
-  reportBtn.className = 'pw-btn pw-btn-report';
-  reportBtn.textContent = 'Report';
-  reportBtn.addEventListener('click', () => {
-    overlay.remove();
-    showToast('Message reported. Thank you for helping keep the community safe.');
-  });
-
   const proceedBtn = document.createElement('button');
   proceedBtn.className = 'pw-btn pw-btn-proceed';
   proceedBtn.textContent = 'Proceed Anyway';
   proceedBtn.addEventListener('click', () => {
     overlay.remove();
-    // Mark link as approved so it does not trigger again this session
     approvedLinks.add(linkUrl);
-    // Open the link in a new tab
+    bypassNext = true;
     window.open(linkUrl, '_blank');
   });
 
   buttons.appendChild(goBackBtn);
-  buttons.appendChild(reportBtn);
   buttons.appendChild(proceedBtn);
 
   modal.appendChild(header);
@@ -118,7 +150,6 @@ function showWarningModal(linkUrl, warningText, originalClickHandler) {
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  // Close modal when clicking outside
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.remove();
   });
@@ -142,20 +173,6 @@ function showLoadingModal() {
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-}
-
-// Show a brief toast notification
-function showToast(message) {
-  const existing = document.getElementById('phishing-warning-toast');
-  if (existing) existing.remove();
-
-  const toast = document.createElement('div');
-  toast.id = 'phishing-warning-toast';
-  toast.className = 'pw-toast';
-  toast.textContent = message;
-  document.body.appendChild(toast);
-
-  setTimeout(() => toast.remove(), 4000);
 }
 
 // Show error modal if API call fails
@@ -189,16 +206,22 @@ function showErrorModal(errorMessage) {
 
 // Main click interceptor — listens for all link clicks on Discord
 document.addEventListener('click', async (e) => {
-  // Find the closest anchor tag to the clicked element
+  if (bypassNext) {
+    bypassNext = false;
+    return;
+  }
+
   const link = e.target.closest('a[href]');
   if (!link) return;
 
   const linkUrl = link.href;
 
   // Only intercept external links — ignore Discord internal navigation
-  if (!linkUrl.startsWith('http') ||
-      linkUrl.includes('discord.com') ||
-      linkUrl.includes('discord.gg')) {
+  if (
+    !linkUrl.startsWith('http') ||
+    linkUrl.includes('discord.com') ||
+    linkUrl.includes('discord.gg')
+  ) {
     return;
   }
 
@@ -233,7 +256,17 @@ document.addEventListener('click', async (e) => {
         return;
       }
 
-      showWarningModal(linkUrl, response.warningText, null);
+      // If Gemini determined the link is safe open it normally
+      if (response.safe) {
+        approvedLinks.add(linkUrl);
+        const existing = document.getElementById('phishing-warning-modal');
+        if (existing) existing.remove();
+        bypassNext = true;
+        window.open(linkUrl, '_blank');
+        return;
+      }
+
+      showWarningModal(linkUrl, response.warningText);
     }
   );
 });
