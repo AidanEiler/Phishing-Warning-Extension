@@ -1,0 +1,164 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #313338;
+  color: #dbdee1;
+}
+
+.container {
+  padding: 20px;
+}
+
+h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: #80848e;
+  margin-bottom: 16px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #2b2d31;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ed4245;
+  flex-shrink: 0;
+}
+
+.status-dot.active {
+  background: #57f287;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #b5bac1;
+  margin-bottom: 6px;
+}
+
+input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #1e1f22;
+  border: 1px solid #4e5058;
+  border-radius: 6px;
+  color: #dbdee1;
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 6px;
+}
+
+input:focus {
+  border-color: #5865f2;
+}
+
+#toggleVisibility {
+  background: none;
+  border: none;
+  color: #80848e;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+#toggleVisibility:hover {
+  color: #dbdee1;
+}
+
+.save-btn {
+  width: 100%;
+  padding: 10px;
+  background: #5865f2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.save-btn:hover {
+  background: #4752c4;
+}
+
+.clear-btn {
+  width: 100%;
+  padding: 10px;
+  background: none;
+  color: #ed4245;
+  border: 1px solid #ed4245;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.clear-btn:hover {
+  background: #ed424520;
+}
+
+.info {
+  font-size: 11px;
+  color: #80848e;
+  line-height: 1.6;
+}
+
+.info a {
+  color: #5865f2;
+  text-decoration: none;
+}
+
+.info a:hover {
+  text-decoration: underline;
+}
+
+.message {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 12px;
+  display: none;
+}
+
+.message.success {
+  background: #57f28720;
+  color: #57f287;
+  border: 1px solid #57f287;
+  display: block;
+}
+
+.message.error {
+  background: #ed424520;
+  color: #ed4245;
+  border: 1px solid #ed4245;
+  display: block;
+}
