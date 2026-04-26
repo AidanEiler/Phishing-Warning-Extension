@@ -239,7 +239,7 @@ function showWarningModal(linkUrl, warningText) {
 
   const goBackBtn = document.createElement('button');
   goBackBtn.className = 'pw-btn pw-btn-safe';
-  goBackBtn.textContent = 'Go Back (Safe)';
+  goBackBtn.textContent = 'Go Back';
   goBackBtn.addEventListener('click', () => {
     overlay.remove();
   });
